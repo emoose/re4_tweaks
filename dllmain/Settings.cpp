@@ -3,6 +3,7 @@
 #include <iostream>
 #include <mutex>
 #include "stdafx.h"
+#include <shellapi.h>
 #include "dllmain.h"
 #include "ConsoleWnd.h"
 #include "Settings.h"
@@ -20,6 +21,121 @@ const std::string sHDProjectOverrideName = "HDProject.ini";
 const char* sLeonCostumeNames[] = {"Jacket", "Normal", "Vest", "RPD", "Mafia"};
 const char* sAshleyCostumeNames[] = {"Normal", "Popstar", "Armor"};
 const char* sAdaCostumeNames[] = {"RE2", "Spy", "Normal"};
+
+// Extended version of CIniReader which also checks command-line params for values to override with
+class CmdIniReader : CIniReader
+{
+private:
+	LPWSTR* argv = nullptr;
+	int argc = 0;
+
+	std::string SearchCommandLineParamValue(std::string_view param_name, bool is_boolean = false)
+	{
+		if (!argv)
+			argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+		// Convert param name to wide char to make comparing against wide args easier
+		WCHAR param_buf[256];
+		if (!SUCCEEDED(MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, param_name.data(), -1, param_buf, 256)))
+			return "";
+
+		BOOL lpUsedDefaultChar = FALSE;
+		char arg_buf[256];
+		for (int i = 1; i < argc; i++)
+		{
+			// Make sure the arg is at least large enough for a switch char (- or /) along with 1 extra char
+			if (wcslen(argv[i]) <= 1)
+				continue;
+
+			// Is this arg the param we're looking for?
+			if (_wcsicmp(param_buf, argv[i] + 1) != 0) // argv[i] + 1 to skip the switch character
+				continue;
+
+			// Found the param, grab the value
+			if (i + 1 < argc)
+			{
+				if (SUCCEEDED(WideCharToMultiByte(CP_ACP, 0, argv[i + 1], -1, arg_buf, 256, NULL, &lpUsedDefaultChar)))
+					return arg_buf;
+			}
+			else
+			{
+				// Param was specified but no value given, if it's a bool then we'll treat specifying it as true
+				if (is_boolean)
+					return "true";
+			}
+		}
+
+		return "";
+	}
+
+public:
+	CmdIniReader() : CIniReader() {}
+	CmdIniReader(std::string_view szFileName) : CIniReader(szFileName) {}
+	CmdIniReader(std::stringstream& ini_mem) : CIniReader(ini_mem) {}
+	~CmdIniReader()
+	{
+		if (argv)
+			LocalFree(argv);
+		argv = nullptr;
+		argc = 0;
+	}
+
+	bool ReadBoolean(std::string_view szSection, std::string_view szKey, bool bolDefaultValue)
+	{
+		bool value = CIniReader::ReadBoolean(szSection, szKey, bolDefaultValue);
+
+		std::string cmd_value = SearchCommandLineParamValue(szKey, true);
+		if (!cmd_value.empty())
+			value = !(_stricmp(cmd_value.c_str(), "false") == 0 || _stricmp(cmd_value.c_str(), "0") == 0);
+
+		return value;
+	}
+
+	float ReadFloat(std::string_view szSection, std::string_view szKey, float fltDefaultValue)
+	{
+		float value = CIniReader::ReadFloat(szSection, szKey, fltDefaultValue);
+
+		std::string cmd_value = SearchCommandLineParamValue(szKey);
+		if (!cmd_value.empty())
+		{
+			try
+			{
+				value = (float)std::stod(cmd_value);
+			}
+			catch (std::exception&) {}
+		}
+
+		return value;
+	}
+
+	int ReadInteger(std::string_view szSection, std::string_view szKey, int iDefaultValue)
+	{
+		int value = CIniReader::ReadInteger(szSection, szKey, iDefaultValue);
+
+		std::string cmd_value = SearchCommandLineParamValue(szKey);
+		if (!cmd_value.empty())
+		{
+			try
+			{
+				value = std::stoi(cmd_value, nullptr, 0);
+			}
+			catch (std::exception&) {}
+		}
+
+		return value;
+	}
+
+	std::string ReadString(std::string_view szSection, std::string_view szKey, std::string_view szDefaultValue)
+	{
+		std::string value = CIniReader::ReadString(szSection, szKey, szDefaultValue);
+
+		std::string cmd_value = SearchCommandLineParamValue(szKey);
+		if (!cmd_value.empty())
+			value = cmd_value;
+
+		return value;
+	}
+};
 
 std::vector<uint32_t> ParseKeyCombo(std::string_view in_combo)
 {
@@ -119,7 +235,7 @@ void Settings::ReadSettings()
 
 void Settings::ReadSettings(std::string_view ini_path)
 {
-	CIniReader iniReader(ini_path);
+	CmdIniReader iniReader(ini_path);
 
 	#ifdef VERBOSE
 	con.AddLogChar("Reading settings from %s", ini_path.data());
