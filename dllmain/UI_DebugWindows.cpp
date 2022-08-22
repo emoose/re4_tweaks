@@ -512,7 +512,8 @@ bool UI_Globals::Render(bool WindowMode)
 
 		ImGui::Text("Total kills: %d", globals->g_kill_cnt_8468);
 
-		ImGui::Text("Weapon ID: %d", ItemMgr->m_wep_id_10);
+		if (ItemMgr->m_pWep_C)
+			ImGui::Text("Weapon ID: %d", ItemMgr->m_pWep_C->id_0);
 
 		if (ItemPiecePtr())
 		{
@@ -521,8 +522,8 @@ bool UI_Globals::Render(bool WindowMode)
 				ImGui::Text("itemPiece pItem.id: %d", ItemPiecePtr()->pItem_24->id_0);
 		}
 
-		extern ITEM_ID BoundWeapons[5];
-		ImGui::Text("Cur bound weapon IDs: %d %d %d %d %d", BoundWeapons[0], BoundWeapons[1], BoundWeapons[2], BoundWeapons[3], BoundWeapons[4]);
+		ImGui::Text("Cur bound weapon IDs: %d %d %d %d %d", 
+			pConfig->iWeaponHotkeyWepIds[0], pConfig->iWeaponHotkeyWepIds[1], pConfig->iWeaponHotkeyWepIds[2], pConfig->iWeaponHotkeyWepIds[3], pConfig->iWeaponHotkeyWepIds[4]);
 
 		ImGui::End();
 	}
