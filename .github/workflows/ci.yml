@@ -4,30 +4,94 @@ on:
   push:
     branches:
       - master
+      - actions-test
   pull_request:
     branches:
       - master
 
 jobs:
-  build:
-    name: Build Debug and Release
+  build-prepare:
+    name: Build preparations
     runs-on: windows-2022
-
+    
     steps:
-      - name: Get current date
-        id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H%M%S')"
-
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
+          
+      - name: Prepare source directory
+        run: |
+          echo "date=$(date +'%Y-%m-%d_%H%M%S')" > build-date.txt
+          Remove-Item .git/modules/ -Recurse -Force
+          
+      - uses: actions/cache@v3
+        with:
+          path: .
+          key: source_${{ github.head_ref || github.ref_name }}_${{ github.sha }}
+      
+  build-debug:
+    name: Build Debug
+    runs-on: windows-2022
+    needs: build-prepare
+
+    steps:          
+      - uses: actions/cache@v3
+        with:
+          path: .
+          key: source_${{ github.head_ref || github.ref_name }}_${{ github.sha }}
+          
+      - name: Fetch build date
+        id: date
+        run: cat build-date.txt >> $env:GITHUB_OUTPUT
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v1.1.3
 
       - name: Build Debug
         run: |
           msbuild re4_tweaks.sln /p:Configuration=Debug /p:PostBuildEventUseInBuild=false
+
+      - name: Create default configuration file
+        shell: bash
+        run: |
+          cp settings/settings.ini dinput8.ini
+          cp settings/trainer_settings.ini trainer.ini
+
+      - name: Copy game data files
+        shell: bash
+        run: |
+          cp -r external/EnglishSubtitleData/Bin32/re4_tweaks/ Debug/re4_tweaks/
+          cp -r dist/Bin32/re4_tweaks/ Debug/
+          cp dinput8.ini Debug/
+          cp trainer.ini Debug/re4_tweaks/
+
+      - name: Upload Debug
+        uses: actions/upload-artifact@v3
+        with:
+          path: |
+            Debug/re4_tweaks/
+            Debug/dinput8.dll
+            Debug/dinput8.ini
+            Debug/dinput8.pdb
+          name: re4_tweaks_debug_${{ github.head_ref || github.ref_name }}_${{ steps.date.outputs.date }}
+
+  build-release:
+    name: Build Release
+    runs-on: windows-2022
+    needs: build-prepare
+    
+    steps:
+      - uses: actions/cache@v3
+        with:
+          path: .
+          key: source_${{ github.head_ref || github.ref_name }}_${{ github.sha }}
+          
+      - name: Fetch build date
+        id: date
+        run: cat build-date.txt >> $env:GITHUB_OUTPUT
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1.3
 
       - name: Remove VERBOSE
         shell: bash
@@ -43,31 +107,17 @@ jobs:
         run: |
           cp settings/settings.ini dinput8.ini
           cp settings/trainer_settings.ini trainer.ini
-          
+
       - name: Copy game data files
         shell: bash
         run: |
-          cp -r external/EnglishSubtitleData/Bin32/re4_tweaks/ Debug/re4_tweaks/
           cp -r external/EnglishSubtitleData/Bin32/re4_tweaks/ Release/re4_tweaks/
-          cp -r dist/Bin32/re4_tweaks/ Debug/
           cp -r dist/Bin32/re4_tweaks/ Release/
-          cp dinput8.ini Debug/
           cp dinput8.ini Release/
-          cp trainer.ini Debug/re4_tweaks/
           cp trainer.ini Release/re4_tweaks/
 
-      - name: Upload Debug
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            Debug/re4_tweaks/
-            Debug/dinput8.dll
-            Debug/dinput8.ini
-            Debug/dinput8.pdb
-          name: re4_tweaks_debug_${{ github.head_ref || github.ref_name }}_${{ steps.date.outputs.date }}
-
       - name: Upload Release
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: |
             Release/re4_tweaks/
