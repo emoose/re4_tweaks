@@ -76,6 +76,7 @@ public:
 	bool bFixTurningSpeed = true;
 	bool bFixQTE = true;
 	bool bFixAshleyBustPhysics = true;
+	bool bFixMercsMode = true;
 	bool bEnableFastMath = true;
 	bool bPrecacheModels = false;
 
@@ -107,6 +108,7 @@ public:
 	bool bEnableDebugMenu = false;
 	bool bEnableModExpansion = false;
 	bool bForceETSApplyScale = false;
+	bool bEnableNTSCMode = true;
 
 	// MEMORY
 	bool bAllowHighResolutionSFD = true;

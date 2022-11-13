@@ -1094,6 +1094,47 @@ void Init_Misc()
 			spd::log()->info("AshleyJPCameraAngles enabled");
 	}
 
+	// NTSC mode
+	// Unlocks difficulty boosts previously exclusive to the NTSC console versions.
+	// These were locked behind checks for pSys->language_8 == 1 (North America). Since RE4 UHD is based on a PAL release, Steam players never saw these.
+	{
+		if (pConfig->bEnableNTSCMode)
+		{
+			// Normal mode and Separate Ways: increased starting difficulty (3500->5500)
+			auto pattern = hook::pattern("8A 50 ? FE CA 0F B6 C2");
+			Patch(pattern.count(1).get(0).get<uint32_t>(0), { 0xB2, 0x01, 0x90 }); // GamePointInit, { mov dl, 1 }
+
+			// Assignment Ada: increased difficulty (4500->6500)
+			pattern = hook::pattern("66 39 B1 ? ? 00 00 75 10");
+			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(7), 2); // GameAddPoint
+
+			// Shooting range: change bottle cap score requirements (1000->3000)
+			pattern = hook::pattern("8B F9 8A ? ? 8B ? ? FE C9");
+			Patch(pattern.count(1).get(0).get<uint32_t>(2), { 0xB1, 0x01, 0x90 }); // cCap::check, { mov cl, 1 }
+
+			// Shooting range: only check for bottle cap reward once per results screen
+			pattern = hook::pattern("8B 15 ? ? ? ? 80 7A ? 01 74");
+			Patch(pattern.count(2).get(1).get<uint32_t>(10), { 0xEB }); // shootResult, jz -> jmp
+
+			// Mercenaries: unlock Village stage difficulty, requires 60fps fix
+			Patch(pattern.count(2).get(0).get<uint32_t>(10), { 0xEB }); // GameAddPoint, jz -> jmp
+			pattern = hook::pattern("A1 40 ? ? ? 80 ? ? 00 74 ? 6A 0E");
+			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // R400Main()
+
+			// remove Easy Mode from the title menu
+			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 75");
+			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // titleLevelInit
+
+			// don't know what this does, but it's also unlocked by having professional mode unlocked, so probably not language related
+			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 74");
+			Patch(pattern.count(1).get(0).get<uint32_t>(9), { 0xEB }); // titleMain:sub_6D6010, jz -> jmp
+
+			// don't know what this does, but it looks similar to the previous check
+			pattern = hook::pattern("80 78 ? 01 53 74 ");
+			Patch(pattern.count(1).get(0).get<uint32_t>(10), { 0xEB }); // titleLevelSelect, jz -> jmp
+		}
+	}
+
 	// Allow changing games level of violence to users choice
 	{
 		// find cCard functbl (tbl.1654)

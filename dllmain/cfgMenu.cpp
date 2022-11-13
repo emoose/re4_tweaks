@@ -1057,6 +1057,19 @@ void cfgMenuRender()
 						ImGui::TextWrapped("Fixes difference between 30/60FPS on physics applied to Ashley.");
 					}
 
+					// FixMercsMode
+					{
+						ImGui_ColumnSwitch();
+
+						pConfig->HasUnsavedChanges |= ImGui::Checkbox("FixMercsMode", &pConfig->bFixMercsMode);
+
+						ImGui_ItemSeparator();
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+						ImGui::TextWrapped("Fixes issues with adaptive difficulty gain and broken spawns when playing at 60fps in Mercenaries mode.");
+					}
+
+
 					// EnableFastMath
 					{
 						ImGui_ColumnSwitch();
@@ -1143,6 +1156,24 @@ void cfgMenuRender()
 						}
 						ImGui::PopItemWidth();
 						ImGui::EndDisabled();
+					}
+
+					// EnableNTSCMode
+					{
+						ImGui_ColumnSwitch();
+
+						if(ImGui::Checkbox("EnableNTSCMode", &pConfig->bEnableNTSCMode))
+						{
+							pConfig->HasUnsavedChanges = true;
+							NeedsToRestart = true;
+						}
+
+						ImGui_ItemSeparator();
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+						ImGui::TextWrapped("Unlocks minor difficulty boosts previously exclusive to the North American console versions of RE4.");
+						ImGui::TextWrapped("Higher starting adaptive difficulty, more difficult Ada missions, and a more difficult Mercenaries village stage.");
+						ImGui::TextWrapped("Shooting gallery requirements are higher, and Easy difficulty is removed from the title menu.");
 					}
 
 					// AshleyJPCameraAngles

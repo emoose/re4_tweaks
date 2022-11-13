@@ -266,6 +266,7 @@ void Config::ReadSettings(std::string_view ini_path)
 	pConfig->bFixTurningSpeed = iniReader.ReadBoolean("FRAME RATE", "FixTurningSpeed", pConfig->bFixTurningSpeed);
 	pConfig->bFixQTE = iniReader.ReadBoolean("FRAME RATE", "FixQTE", pConfig->bFixQTE);
 	pConfig->bFixAshleyBustPhysics = iniReader.ReadBoolean("FRAME RATE", "FixAshleyBustPhysics", pConfig->bFixAshleyBustPhysics);
+	pConfig->bFixMercsMode = iniReader.ReadBoolean("FRAME RATE", "FixMercsMode", pConfig->bFixMercsMode);
 	pConfig->bEnableFastMath = iniReader.ReadBoolean("FRAME RATE", "EnableFastMath", pConfig->bEnableFastMath);
 	pConfig->bPrecacheModels = iniReader.ReadBoolean("FRAME RATE", "PrecacheModels", pConfig->bPrecacheModels);
 
@@ -309,6 +310,7 @@ void Config::ReadSettings(std::string_view ini_path)
 			iCostumeComboAda--;
 	}
 
+	pConfig->bEnableNTSCMode = iniReader.ReadBoolean("MISC", "EnableNTSCMode", pConfig->bEnableNTSCMode);
 	pConfig->bAshleyJPCameraAngles = iniReader.ReadBoolean("MISC", "AshleyJPCameraAngles", pConfig->bAshleyJPCameraAngles);
 	pConfig->iViolenceLevelOverride = iniReader.ReadInteger("MISC", "ViolenceLevelOverride", pConfig->iViolenceLevelOverride);
 	pConfig->iViolenceLevelOverride = min(max(pConfig->iViolenceLevelOverride, -1), 2); // limit between -1 to 2
@@ -753,6 +755,7 @@ void WriteSettings(std::string_view iniPath, bool trainerIni)
 	iniReader.WriteBoolean("FRAME RATE", "FixTurningSpeed", pConfig->bFixTurningSpeed);
 	iniReader.WriteBoolean("FRAME RATE", "FixQTE", pConfig->bFixQTE);
 	iniReader.WriteBoolean("FRAME RATE", "FixAshleyBustPhysics", pConfig->bFixAshleyBustPhysics);
+	iniReader.WriteBoolean("FRAME RATE", "FixMercsMode", pConfig->bFixMercsMode);
 	iniReader.WriteBoolean("FRAME RATE", "EnableFastMath", pConfig->bEnableFastMath);
 	iniReader.WriteBoolean("FRAME RATE", "PrecacheModels", pConfig->bPrecacheModels);
 
@@ -762,6 +765,7 @@ void WriteSettings(std::string_view iniPath, bool trainerIni)
 	iniReader.WriteString("MISC", "LeonCostume", " " + std::string(sLeonCostumeNames[iCostumeComboLeon]));
 	iniReader.WriteString("MISC", "AshleyCostume", " " + std::string(sAshleyCostumeNames[iCostumeComboAshley]));
 	iniReader.WriteString("MISC", "AdaCostume", " " + std::string(sAdaCostumeNames[iCostumeComboAda]));
+	iniReader.WriteBoolean("MISC", "EnableNTSCMode", pConfig->bEnableNTSCMode);
 	iniReader.WriteBoolean("MISC", "AshleyJPCameraAngles", pConfig->bAshleyJPCameraAngles);
 	iniReader.WriteInteger("MISC", "ViolenceLevelOverride", pConfig->iViolenceLevelOverride);
 	iniReader.WriteBoolean("MISC", "AllowSellingHandgunSilencer", pConfig->bAllowSellingHandgunSilencer);

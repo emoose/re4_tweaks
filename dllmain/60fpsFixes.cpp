@@ -4,6 +4,7 @@
 #include "Settings.h"
 
 uint32_t ModelForceRenderAll_EndTick = 0;
+float fMercsTimer = 0.0F;
 
 // Called by AddOtModelPosRadius to check if model is in view of camera
 bool(*collision_sphere_hexahedron)(void*, void*);
@@ -164,6 +165,35 @@ void Init_60fpsFixes()
 				regs.edx = *(uint32_t*)(regs.eax + 0xC);
 			}
 		}; injector::MakeInline<AshleyBustFrametimeFix>(pattern.count(1).get(0).get<uint32_t>(6), pattern.count(1).get(0).get<uint32_t>(11));
+	}
+
+    // Don't call Mercenary mode's main spawn loop more than 30 times a second
+	// fixes the issue with the village stage's difficulty increasing twice as fast in 60fps NTSC mode
+	// hopefully also fixes the glitch that prevents some enemies from spawning when playing at 60fps
+	{
+		auto pattern = hook::pattern("A1 3C ? ? ? F7 80 ? ? 00 00 00 10 00 00 0F"); // R400Main()
+		struct MercsModeFPSFix
+		{
+			void operator()(injector::reg_pack& regs)
+			{
+				bool cameraLocked = FlagIsSet(GlobalPtr()->flags_STATUS_0_501C, uint32_t(Flags_STATUS::STA_EVENT));
+				bool waiting = false;
+
+				if (pConfig->bFixMercsMode)
+				{
+					fMercsTimer += 1.0F * (GlobalPtr()->deltaTime_70);
+					if (fMercsTimer >= 1.0F)
+						fMercsTimer -= 1.0F;
+					else
+						waiting = true;
+				}
+
+				if (!waiting && !cameraLocked)
+					regs.ef |= (1 << regs.zero_flag);
+				else
+					regs.ef &= ~(1 << regs.zero_flag);
+			}
+		}; injector::MakeInline<MercsModeFPSFix>(pattern.count(1).get(0).get<uint32_t>(5), pattern.count(1).get(0).get<uint32_t>(15));
 	}
 
 	// Workaround for lag spike when many models are first shown on screen
