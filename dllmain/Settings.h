@@ -108,7 +108,7 @@ public:
 	bool bEnableDebugMenu = false;
 	bool bEnableModExpansion = false;
 	bool bForceETSApplyScale = false;
-	bool bEnableNTSCMode = true;
+	bool bEnableNTSCMode = false;
 
 	// MEMORY
 	bool bAllowHighResolutionSFD = true;

@@ -920,6 +920,7 @@ void Config::LogSettings()
 	spd::log()->info("| {:<30} | {:>15} |", "FixTurningSpeed", pConfig->bFixTurningSpeed ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "FixQTE", pConfig->bFixQTE ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "FixAshleyBustPhysics", pConfig->bFixAshleyBustPhysics ? "true" : "false");
+	spd::log()->info("| {:<30} | {:>15} |", "EnableNTSCMode", pConfig->bEnableNTSCMode ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "EnableFastMath", pConfig->bEnableFastMath ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "PrecacheModels", pConfig->bPrecacheModels ? "true" : "false");
 	spd::log()->info("+--------------------------------+-----------------+");
@@ -948,6 +949,7 @@ void Config::LogSettings()
 	spd::log()->info("| {:<30} | {:>15} |", "EnableDebugMenu", pConfig->bEnableDebugMenu ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "EnableModExpansion", pConfig->bEnableModExpansion ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "ForceETSApplyScale", pConfig->bForceETSApplyScale ? "true" : "false");
+	spd::log()->info("| {:<30} | {:>15} |", "EnableNTSCMode", pConfig->bEnableNTSCMode ? "true" : "false");
 	spd::log()->info("+--------------------------------+-----------------+");
 
 	// MEMORY

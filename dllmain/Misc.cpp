@@ -1116,22 +1116,34 @@ void Init_Misc()
 			pattern = hook::pattern("8B 15 ? ? ? ? 80 7A ? 01 74");
 			Patch(pattern.count(2).get(1).get<uint32_t>(10), { 0xEB }); // shootResult, jz -> jmp
 
-			// Mercenaries: unlock Village stage difficulty, requires 60fps fix
+			// Mercenaries: unlock village stage difficulty, requires 60fps fix
 			Patch(pattern.count(2).get(0).get<uint32_t>(10), { 0xEB }); // GameAddPoint, jz -> jmp
 			pattern = hook::pattern("A1 40 ? ? ? 80 ? ? 00 74 ? 6A 0E");
 			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // R400Main()
 
+			/*
 			// remove Easy Mode from the title menu
 			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 75");
 			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // titleLevelInit
 
-			// don't know what this does, but it's also unlocked by having professional mode unlocked, so probably not language related
+			// this stuff looks like it's necessary to make inputs work correctly on the difficulty select menu
 			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 74");
-			Patch(pattern.count(1).get(0).get<uint32_t>(9), { 0xEB }); // titleMain:sub_6D6010, jz -> jmp
+			if (!pattern.empty())
+			{
+				Patch(pattern.count(1).get(0).get<uint32_t>(9), { 0xEB }); // titleMain:sub_6D6010, jz -> jmp
 
-			// don't know what this does, but it looks similar to the previous check
-			pattern = hook::pattern("80 78 ? 01 53 74 ");
-			Patch(pattern.count(1).get(0).get<uint32_t>(10), { 0xEB }); // titleLevelSelect, jz -> jmp
+				pattern = hook::pattern("80 78 ? 01 53 74 ");
+				Patch(pattern.count(1).get(0).get<uint32_t>(10), { 0xEB }); // titleLevelSelect, jz -> jmp
+			}
+			else // these checks are reversed in the JP.exe for some reason
+			{
+				pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 00 53 75");
+				Patch(pattern.count(1).get(0).get<uint32_t>(10), { 0xEB }); // titleMain:sub_6D6010, jnz -> jmp
+
+				pattern = hook::pattern("89 4E ? A1 40 ? ? ? 80");
+				Patch(pattern.count(1).get(0).get<uint32_t>(12), { 0xEB }); // titleLevelSelect, jnz -> jmp
+			}
+			*/
 		}
 	}
 
