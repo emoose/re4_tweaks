@@ -1121,7 +1121,7 @@ void Init_Misc()
 			pattern = hook::pattern("A1 40 ? ? ? 80 ? ? 00 74 ? 6A 0E");
 			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // R400Main()
 
-			// remove Easy Mode from the difficulty menu
+			// remove Easy mode from the difficulty menu
 			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 75");
 			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // titleLevelInit
 
@@ -1140,7 +1140,7 @@ void Init_Misc()
 			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 74");
 			if (pattern.empty())
 			{
-				// hijack the 'if (!(pSys->flags_EXTRA_4[0] & EXT_HARD_MODE))' block to hide Amateur mode instead
+				// override the hide Professional mode block to hide Amateur mode instead
 				pattern = hook::pattern("C7 46 30 01 00 00 00");
 				injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(7), 2); // titleLevelInit
 				injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(16), 2);

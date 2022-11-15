@@ -69,20 +69,6 @@ enum class GameDifficulty : uint8_t
 	Pro = 0x6,
 };
 
-enum class TitleCommand : uint8_t
-{
-	Null,
-	Start,
-	Load,
-	Option,
-	Level,
-	Language,
-	Extra,
-	Leaderboards,
-	Credits,
-	QuitGame
-};
-
 enum class LeonCostume : uint8_t
 {
 	Jacket,

@@ -189,7 +189,7 @@ void Init_60fpsFixes()
 				}
 
 				if (!waiting && !cameraLocked)
-					regs.ef |= (1 << regs.zero_flag);
+					regs.ef |= (1 << regs.zero_flag); // proceed through the function
 				else
 					regs.ef &= ~(1 << regs.zero_flag);
 			}

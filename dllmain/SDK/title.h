@@ -66,3 +66,19 @@ struct __declspec(align(4)) TITLE_WORK
 	}
 };
 assert_size(TITLE_WORK, 0xBC);
+
+enum class TitleCommand : int32_t
+{
+	Null,
+	Start,
+	Load,
+	Option,
+	Level,
+	Language,
+	Extra,
+	Leaderboards,
+	Credits,
+	QuitGame
+};
+
+
