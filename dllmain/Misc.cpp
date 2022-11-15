@@ -1121,41 +1121,47 @@ void Init_Misc()
 			pattern = hook::pattern("A1 40 ? ? ? 80 ? ? 00 74 ? 6A 0E");
 			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // R400Main()
 
-			// remove Easy Mode from the title menu
-			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 74");
-			if (!pattern.empty())
+			// remove Easy Mode from the difficulty menu
+			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 75");
+			injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // titleLevelInit
+
+			// skip difficulty select on a New Game save
+			pattern = hook::pattern("B8 04 00 00 00 5B 8B E5");
+			struct SkipLevelSelect
 			{
-				// these seem to handle menu input control
-				Patch(pattern.count(1).get(0).get<uint32_t>(9), { 0xEB }); // titleMain:sub_6D6010, jz -> jmp
-
-				pattern = hook::pattern("80 78 ? 01 53 74 ");
-				Patch(pattern.count(1).get(0).get<uint32_t>(10), { 0xEB }); // titleLevelSelect, jz -> jmp
-
-				// this is what hides the menu texture
-				pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 75");
-				injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(9), 2); // titleLevelInit
-
-				// skip level select on a New Game save
-				pattern = hook::pattern("B8 04 00 00 00 5B 8B E5");
-				struct SkipLevelSelect
+				void operator()(injector::reg_pack& regs)
 				{
-					void operator()(injector::reg_pack& regs)
-					{
-						bool NewGame = !FlagIsSet(SystemSavePtr()->flags_EXTRA_4, uint32_t(Flags_EXTRA::EXT_HARD_MODE));
-						regs.eax = NewGame ? 1 : 4;
-					}
-				}; injector::MakeInline<SkipLevelSelect>(pattern.count(1).get(0).get<uint32_t>(0), pattern.count(1).get(0).get<uint32_t>(5));
-			}
-			/*
-			else // these checks are reversed in the JP.exe for some reason
-			{
-				pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 00 53 75");
-				Patch(pattern.count(1).get(0).get<uint32_t>(10), { 0xEB }); // titleMain:sub_6D6010, jnz -> jmp
+					bool newGame = !FlagIsSet(SystemSavePtr()->flags_EXTRA_4, uint32_t(Flags_EXTRA::EXT_HARD_MODE));
+					regs.eax = newGame ? uint32_t(TitleCommand::Start) : uint32_t(TitleCommand::Level);
+				}
+			}; injector::MakeInline<SkipLevelSelect>(pattern.count(1).get(0).get<uint32_t>(0), pattern.count(1).get(0).get<uint32_t>(5));
 
-				pattern = hook::pattern("89 4E ? A1 40 ? ? ? 80");
-				Patch(pattern.count(1).get(0).get<uint32_t>(12), { 0xEB }); // titleLevelSelect, jnz -> jmp
+			// special handling for the JP.exe title menu
+			pattern = hook::pattern("A1 40 ? ? ? 80 78 ? 01 74");
+			if (pattern.empty())
+			{
+				// hijack the 'if (!(pSys->flags_EXTRA_4[0] & EXT_HARD_MODE))' block to hide Amateur mode instead
+				pattern = hook::pattern("C7 46 30 01 00 00 00");
+				injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(7), 2); // titleLevelInit
+				injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(16), 2);
+				Patch(pattern.count(1).get(0).get<uint32_t>(21), { 0x09 });
+				Patch(pattern.count(1).get(0).get<uint32_t>(38), { 0x0A });
+				// erase the rest of the block
+				pattern = hook::pattern("C7 46 ? 03 00 00 00 85 DB");
+				injector::MakeNOP(pattern.get_first(0), 37);
+
+				// disable the JP difficulty select confirmation prompts
+				pattern = hook::pattern("A1 40 ? ? ? 38 58 08 75");
+				Patch(pattern.count(1).get(0).get<uint32_t>(8), { 0xEB }); // titleMain, jnz -> jmp
+
+				// ignore pSys->language_8 check when skipping the difficulty menu
+				pattern = hook::pattern("38 59 08 0F 84 09 0B 00 00");
+				injector::MakeNOP(pattern.count(1).get(0).get<uint32_t>(3), 6); // titleMain, jz -> jmp
 			}
-			*/
+
+			// remove JP only 20% damage mitigation armor from Assignment Ada
+			pattern = hook::pattern("F7 46 54 00 00 00 40");
+			Patch(pattern.count(1).get(0).get<uint32_t>(7), { 0xEB }); // LifeDownSet2, jz -> jmp
 		}
 	}
 
