@@ -59,6 +59,7 @@ TITLE_WORK* TitleWorkPtr();
 extern double* fGPUUsagePtr;
 extern double* fCPUUsagePtr;
 
+void RequestInventoryAdd(ITEM_ID id, int count, bool showInventoryUI);
 void RequestWeaponChange();
 void RequestSaveGame();
 void RequestMerchant();
